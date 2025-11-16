@@ -591,54 +591,55 @@ body::before {
 }
 
 .confirm-btn {
-    padding: 12px 25px;
-    border: none;
-    border-radius: 15px;
-    font-size: 16px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: transform 0.1s ease-out, background 0.3s ease;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    min-width: 100px;
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-    position: relative;
-    overflow: hidden;
+    padding: 12px 25px !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    border-radius: 15px !important;
+    font-size: 16px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: transform 0.1s ease-out, background 0.3s ease !important;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+    min-width: 100px !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+    position: relative !important;
+    overflow: hidden !important;
+    display: inline-block !important;
+    outline: none !important;
 }
 
 .confirm-yes {
-    background: rgba(255, 68, 68, 0.4);
-    color: #ffffff;
+    background: rgba(255, 68, 68, 0.4) !important;
+    color: #ffffff !important;
 }
 
 .confirm-yes:hover {
-    background: rgba(255, 68, 68, 0.6);
-    transform: scale(1.02);
+    background: rgba(255, 68, 68, 0.6) !important;
+    transform: scale(1.02) !important;
 }
 
 .confirm-yes:active {
-    background: rgba(255, 68, 68, 0.7);
-    transform: scale(0.98);
+    background: rgba(255, 68, 68, 0.7) !important;
+    transform: scale(0.98) !important;
 }
 
 .confirm-no,
 .alert-ok {
-    background: rgba(30, 30, 30, 0.4);
-    color: #ffffff;
+    background: rgba(30, 30, 30, 0.4) !important;
+    color: #ffffff !important;
 }
 
 .confirm-no:hover,
 .alert-ok:hover {
-    background: rgba(40, 40, 40, 0.5);
-    transform: scale(1.02);
+    background: rgba(40, 40, 40, 0.5) !important;
+    transform: scale(1.02) !important;
 }
 
 .confirm-no:active,
 .alert-ok:active {
-    background: rgba(50, 50, 50, 0.6);
-    transform: scale(0.98);
+    background: rgba(50, 50, 50, 0.6) !important;
+    transform: scale(0.98) !important;
 }
 
 /* Comments Section */
