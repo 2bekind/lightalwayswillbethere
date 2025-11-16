@@ -287,6 +287,54 @@ document.addEventListener('DOMContentLoaded', function() {
     
     let selectedRating = 0;
     
+    // Generate unique device/browser fingerprint
+    function generateDeviceFingerprint() {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        ctx.textBaseline = 'top';
+        ctx.font = '14px Arial';
+        ctx.fillText('Device fingerprint', 2, 2);
+        
+        const fingerprint = {
+            userAgent: navigator.userAgent,
+            language: navigator.language,
+            platform: navigator.platform,
+            screenResolution: `${screen.width}x${screen.height}`,
+            colorDepth: screen.colorDepth,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            canvasHash: canvas.toDataURL(),
+            hardwareConcurrency: navigator.hardwareConcurrency || 'unknown',
+            deviceMemory: navigator.deviceMemory || 'unknown'
+        };
+        
+        // Create hash from fingerprint
+        const fingerprintString = JSON.stringify(fingerprint);
+        let hash = 0;
+        for (let i = 0; i < fingerprintString.length; i++) {
+            const char = fingerprintString.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // Convert to 32bit integer
+        }
+        return 'device_' + Math.abs(hash).toString(36);
+    }
+    
+    // Get or create device fingerprint
+    function getDeviceId() {
+        let deviceId = localStorage.getItem('deviceFingerprint');
+        if (!deviceId) {
+            deviceId = generateDeviceFingerprint();
+            localStorage.setItem('deviceFingerprint', deviceId);
+        }
+        return deviceId;
+    }
+    
+    // Check if user already left a review
+    function hasUserReviewed() {
+        const deviceId = getDeviceId();
+        const comments = loadComments();
+        return comments.some(comment => comment.deviceId === deviceId);
+    }
+    
     // Load comments and rating from localStorage
     function loadComments() {
         const comments = JSON.parse(localStorage.getItem('profileComments') || '[]');
@@ -294,11 +342,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function saveComment(rating, comment, author) {
+        const deviceId = getDeviceId();
         const comments = loadComments();
         comments.push({
             rating: rating,
             comment: comment,
             author: author || 'Anonim',
+            deviceId: deviceId,
             date: new Date().toISOString()
         });
         localStorage.setItem('profileComments', JSON.stringify(comments));
@@ -331,6 +381,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    function deleteComment(commentIndex) {
+        const comments = loadComments();
+        comments.splice(commentIndex, 1);
+        localStorage.setItem('profileComments', JSON.stringify(comments));
+        displayRating();
+        displayComments();
+        checkReviewStatus(); // Re-enable button if comment was deleted
+        notification.textContent = 'Comment deleted!';
+        showNotification();
+    }
+    
     function displayComments() {
         const comments = loadComments();
         commentsList.innerHTML = '';
@@ -340,16 +401,32 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // Show newest first
-        comments.reverse().forEach(comment => {
+        const currentDeviceId = getDeviceId();
+        
+        // Show newest first (create a copy to avoid mutating original array)
+        const reversedComments = [...comments].reverse();
+        
+        reversedComments.forEach((comment, displayIndex) => {
             const commentItem = document.createElement('div');
             commentItem.className = 'comment-item';
             
             const starsHTML = '⭐'.repeat(comment.rating);
+            const isOwnComment = comment.deviceId === currentDeviceId;
+            
+            // Calculate original index in the non-reversed array
+            const originalIndex = comments.length - 1 - displayIndex;
+            
+            let deleteButtonHTML = '';
+            if (isOwnComment) {
+                deleteButtonHTML = `<button class="delete-comment-btn" onclick="window.deleteCommentHandler(${originalIndex})" title="Delete comment">🗑️</button>`;
+            }
             
             commentItem.innerHTML = `
                 <div class="comment-header">
-                    <span class="comment-author">${comment.author}</span>
+                    <div class="comment-author-wrapper">
+                        <span class="comment-author">${comment.author}</span>
+                        ${deleteButtonHTML}
+                    </div>
                     <span class="comment-rating">${starsHTML}</span>
                 </div>
                 <div class="comment-text">${comment.comment || 'No comment'}</div>
@@ -358,6 +435,81 @@ document.addEventListener('DOMContentLoaded', function() {
             commentsList.appendChild(commentItem);
         });
     }
+    
+    // Custom confirm modal
+    function showConfirm(title, message, onConfirm) {
+        const confirmModal = document.getElementById('confirm-modal');
+        const confirmTitle = document.getElementById('confirm-title');
+        const confirmMessage = document.getElementById('confirm-message');
+        const confirmYes = document.getElementById('confirm-yes');
+        const confirmNo = document.getElementById('confirm-no');
+        
+        confirmTitle.textContent = title;
+        confirmMessage.textContent = message;
+        confirmModal.classList.add('show');
+        
+        // Remove old listeners
+        const newConfirmYes = confirmYes.cloneNode(true);
+        const newConfirmNo = confirmNo.cloneNode(true);
+        confirmYes.parentNode.replaceChild(newConfirmYes, confirmYes);
+        confirmNo.parentNode.replaceChild(newConfirmNo, confirmNo);
+        
+        newConfirmYes.addEventListener('click', function() {
+            confirmModal.classList.remove('show');
+            if (onConfirm) onConfirm();
+        });
+        
+        newConfirmNo.addEventListener('click', function() {
+            confirmModal.classList.remove('show');
+        });
+        
+        // Close on overlay click
+        confirmModal.addEventListener('click', function closeHandler(e) {
+            if (e.target === confirmModal) {
+                confirmModal.classList.remove('show');
+                confirmModal.removeEventListener('click', closeHandler);
+            }
+        });
+    }
+    
+    // Custom alert modal
+    function showAlert(title, message) {
+        const alertModal = document.getElementById('alert-modal');
+        const alertTitle = document.getElementById('alert-title');
+        const alertMessage = document.getElementById('alert-message');
+        const alertOk = document.getElementById('alert-ok');
+        
+        alertTitle.textContent = title;
+        alertMessage.textContent = message;
+        alertModal.classList.add('show');
+        
+        // Remove old listener
+        const newAlertOk = alertOk.cloneNode(true);
+        alertOk.parentNode.replaceChild(newAlertOk, alertOk);
+        
+        newAlertOk.addEventListener('click', function() {
+            alertModal.classList.remove('show');
+        });
+        
+        // Close on overlay click
+        alertModal.addEventListener('click', function closeHandler(e) {
+            if (e.target === alertModal) {
+                alertModal.classList.remove('show');
+                alertModal.removeEventListener('click', closeHandler);
+            }
+        });
+    }
+    
+    // Global function for delete button
+    window.deleteCommentHandler = function(commentIndex) {
+        showConfirm(
+            'Delete Review',
+            'Are you sure you want to delete your review?',
+            function() {
+                deleteComment(commentIndex);
+            }
+        );
+    };
     
     // Star selection
     stars.forEach((star, index) => {
@@ -399,6 +551,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Open modal
     if (rateButton) {
         rateButton.addEventListener('click', function() {
+            // Check if user already reviewed
+            if (hasUserReviewed()) {
+                showAlert('Already Reviewed', 'You have already left a review. Only one review per device is allowed.');
+                return;
+            }
+            
             ratingModal.classList.add('show');
             selectedRating = 0;
             ratingValue.textContent = '0';
@@ -428,7 +586,13 @@ document.addEventListener('DOMContentLoaded', function() {
     if (submitButton) {
         submitButton.addEventListener('click', function() {
             if (selectedRating === 0) {
-                alert('Please select a rating');
+                showAlert('Rating Required', 'Please select a rating');
+                return;
+            }
+            
+            // Check if user already reviewed
+            if (hasUserReviewed()) {
+                showAlert('Already Reviewed', 'You have already left a review. Only one review per device is allowed.');
                 return;
             }
             
@@ -451,8 +615,26 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Check and disable button if already reviewed
+    function checkReviewStatus() {
+        if (rateButton) {
+            if (hasUserReviewed()) {
+                rateButton.disabled = true;
+                rateButton.style.opacity = '0.5';
+                rateButton.style.cursor = 'not-allowed';
+                rateButton.title = 'You have already left a review';
+            } else {
+                rateButton.disabled = false;
+                rateButton.style.opacity = '1';
+                rateButton.style.cursor = 'pointer';
+                rateButton.title = '';
+            }
+        }
+    }
+    
     // Initial load
     displayRating();
     displayComments();
+    checkReviewStatus();
 });
 
