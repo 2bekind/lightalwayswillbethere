@@ -216,6 +216,19 @@ body::before {
     display: flex;
     align-items: center;
     gap: 6px;
+    margin-bottom: 8px;
+}
+
+.discord-activity {
+    font-size: 13px;
+    color: #9b59b6;
+    font-style: italic;
+    margin-top: 5px;
+}
+
+.discord-activity-text {
+    color: #9b59b6;
+    opacity: 0.8;
 }
 
 .eye-icon-small {
@@ -271,13 +284,26 @@ body::before {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.rate-button:hover {
+.rate-button:hover:not(.disabled) {
     background: rgba(40, 40, 40, 0.5);
     transform: scale(1.02);
 }
 
-.rate-button:active {
+.rate-button:active:not(.disabled) {
     transform: scale(0.98);
+}
+
+.rate-button.disabled {
+    background: rgba(30, 30, 30, 0.2);
+    opacity: 0.5;
+    cursor: not-allowed;
+    color: #888888;
+    pointer-events: none;
+}
+
+.rate-button.disabled:hover {
+    background: rgba(30, 30, 30, 0.2);
+    transform: none;
 }
 
 .rate-icon {

@@ -636,5 +636,77 @@ document.addEventListener('DOMContentLoaded', function() {
     displayRating();
     displayComments();
     checkReviewStatus();
+    
+    // Disable rate button permanently
+    if (rateButton) {
+        rateButton.disabled = true;
+        rateButton.classList.add('disabled');
+        rateButton.style.opacity = '0.5';
+        rateButton.style.cursor = 'not-allowed';
+        rateButton.style.color = '#888888';
+        rateButton.style.pointerEvents = 'none';
+    }
+});
+
+// Discord Rich Presence Integration
+document.addEventListener('DOMContentLoaded', function() {
+    const DISCORD_APP_ID = '1439735806838439978';
+    const DISCORD_PUBLIC_KEY = 'd46231fbc08318d16b81c9dce17c9fde02e921e7aed690732627f28972b046dc';
+    
+    // Store Discord credentials globally
+    window.DISCORD_APP_ID = DISCORD_APP_ID;
+    window.DISCORD_PUBLIC_KEY = DISCORD_PUBLIC_KEY;
+    
+    // Discord Rich Presence initialization
+    // Works when Discord desktop client is running
+    function initDiscordRichPresence() {
+        try {
+            // Try to use Discord RPC (requires Discord client running)
+            if (typeof DiscordRPC !== 'undefined') {
+                const rpc = new DiscordRPC.Client({ transport: 'ipc' });
+                
+                rpc.on('ready', () => {
+                    rpc.setActivity({
+                        details: 'maybe light is here..?',
+                        state: 'Viewing profile',
+                        startTimestamp: Date.now(),
+                        largeImageKey: 'profile',
+                        largeImageText: '2bekind',
+                        instance: false,
+                    }).catch(err => {
+                        // Silently fail if Discord is not available
+                    });
+                });
+                
+                rpc.login({ clientId: DISCORD_APP_ID }).catch(() => {
+                    // Discord client not available or not running
+                });
+            } else {
+                // Prepare activity data for future use
+                const activityData = {
+                    application_id: DISCORD_APP_ID,
+                    details: 'maybe light is here..?',
+                    state: 'Viewing profile',
+                    timestamps: {
+                        start: Math.floor(Date.now() / 1000)
+                    },
+                    assets: {
+                        large_image: 'profile',
+                        large_text: '2bekind'
+                    },
+                    instance: false
+                };
+                
+                window.DISCORD_ACTIVITY = activityData;
+            }
+        } catch (error) {
+            // Discord RPC not available (normal for web browsers without Discord client)
+        }
+    }
+    
+    // Initialize Discord Rich Presence
+    // Note: Rich Presence works only if Discord desktop client is running
+    // For web browsers, it requires Discord to be installed and running
+    initDiscordRichPresence();
 });
 
