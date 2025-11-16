@@ -34,24 +34,75 @@
                         <div class="status-indicator offline"></div>
                     </div>
                     <div class="activity-info">
-                        <div class="activity-username">2bekind</div>
+                        <div class="activity-username-row">
+                            <div class="activity-username">2bekind</div>
+                            <div class="rating-display" id="rating-display">
+                                <span class="stars" id="stars-display">—</span>
+                            </div>
+                        </div>
                         <div class="activity-status">
                             <span class="eye-icon-small">👁️</span>
-                            <span id="activity-views">0</span> просмотров
+                            <span id="activity-views">0</span> Views
                         </div>
                     </div>
                 </div>
             </div>
+            
+            <button class="rate-button" id="rate-button">
+                <div class="light-overlay"></div>
+                <span class="rate-icon">⭐</span>
+                <span>Rate</span>
+            </button>
             
             <button class="discord-button" id="discord-button">
                 <div class="light-overlay"></div>
                 <span class="discord-icon">💬</span>
                 <span>Discord</span>
             </button>
+            
+            <div class="comments-section" id="comments-section">
+                <h3 class="comments-title">Comments</h3>
+                <div class="comments-list" id="comments-list">
+                    <!-- Comments will be added here -->
+                </div>
+            </div>
         </div>
     </div>
     
-    <div class="notification" id="notification">Никнейм скопирован</div>
+    <!-- Rating Modal -->
+    <div class="modal-overlay" id="rating-modal">
+        <div class="modal-content">
+            <div class="light-overlay"></div>
+            <button class="modal-close" id="modal-close">&times;</button>
+            <h2 class="modal-title">Leave a Review</h2>
+            
+            <div class="rating-input">
+                <label>Rating:</label>
+                <div class="stars-input" id="stars-input">
+                    <span class="star" data-rating="1">⭐</span>
+                    <span class="star" data-rating="2">⭐</span>
+                    <span class="star" data-rating="3">⭐</span>
+                    <span class="star" data-rating="4">⭐</span>
+                    <span class="star" data-rating="5">⭐</span>
+                </div>
+                <span class="rating-value" id="rating-value">0</span>
+            </div>
+            
+            <div class="name-input">
+                <label for="comment-name">Your name (optional):</label>
+                <input type="text" id="comment-name" placeholder="Anonim" maxlength="30">
+            </div>
+            
+            <div class="comment-input">
+                <label for="comment-text">Comment:</label>
+                <textarea id="comment-text" placeholder="Leave your comment..." rows="4"></textarea>
+            </div>
+            
+            <button class="submit-button" id="submit-rating">Submit</button>
+        </div>
+    </div>
+    
+    <div class="notification" id="notification">Username copied</div>
     
     <script src="script.js"></script>
 </body>

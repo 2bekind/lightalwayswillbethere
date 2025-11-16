@@ -271,5 +271,188 @@ document.addEventListener('DOMContentLoaded', function() {
             copyToClipboard(discordNickname);
         });
     }
+    
+    // Rating system
+    const rateButton = document.getElementById('rate-button');
+    const ratingModal = document.getElementById('rating-modal');
+    const modalClose = document.getElementById('modal-close');
+    const starsInput = document.getElementById('stars-input');
+    const stars = starsInput.querySelectorAll('.star');
+    const ratingValue = document.getElementById('rating-value');
+    const commentName = document.getElementById('comment-name');
+    const commentText = document.getElementById('comment-text');
+    const submitButton = document.getElementById('submit-rating');
+    const starsDisplay = document.getElementById('stars-display');
+    const commentsList = document.getElementById('comments-list');
+    
+    let selectedRating = 0;
+    
+    // Load comments and rating from localStorage
+    function loadComments() {
+        const comments = JSON.parse(localStorage.getItem('profileComments') || '[]');
+        return comments;
+    }
+    
+    function saveComment(rating, comment, author) {
+        const comments = loadComments();
+        comments.push({
+            rating: rating,
+            comment: comment,
+            author: author || 'Anonim',
+            date: new Date().toISOString()
+        });
+        localStorage.setItem('profileComments', JSON.stringify(comments));
+    }
+    
+    function calculateAverageRating() {
+        const comments = loadComments();
+        if (comments.length === 0) return 0;
+        const sum = comments.reduce((acc, c) => acc + c.rating, 0);
+        return (sum / comments.length).toFixed(1);
+    }
+    
+    function displayRating() {
+        const avgRating = parseFloat(calculateAverageRating());
+        if (avgRating > 0) {
+            // Round to nearest 0.5 for display
+            const roundedRating = Math.round(avgRating * 2) / 2;
+            const fullStars = Math.floor(roundedRating);
+            const hasHalfStar = roundedRating % 1 >= 0.5;
+            let starsHTML = '';
+            for (let i = 0; i < fullStars; i++) {
+                starsHTML += '⭐';
+            }
+            if (hasHalfStar && fullStars < 5) {
+                starsHTML += '⭐';
+            }
+            starsDisplay.textContent = starsHTML || '—';
+        } else {
+            starsDisplay.textContent = '—';
+        }
+    }
+    
+    function displayComments() {
+        const comments = loadComments();
+        commentsList.innerHTML = '';
+        
+        if (comments.length === 0) {
+            commentsList.innerHTML = '<div style="text-align: center; color: #888; padding: 20px;">No comments yet</div>';
+            return;
+        }
+        
+        // Show newest first
+        comments.reverse().forEach(comment => {
+            const commentItem = document.createElement('div');
+            commentItem.className = 'comment-item';
+            
+            const starsHTML = '⭐'.repeat(comment.rating);
+            
+            commentItem.innerHTML = `
+                <div class="comment-header">
+                    <span class="comment-author">${comment.author}</span>
+                    <span class="comment-rating">${starsHTML}</span>
+                </div>
+                <div class="comment-text">${comment.comment || 'No comment'}</div>
+            `;
+            
+            commentsList.appendChild(commentItem);
+        });
+    }
+    
+    // Star selection
+    stars.forEach((star, index) => {
+        star.addEventListener('click', function() {
+            selectedRating = parseInt(this.dataset.rating);
+            ratingValue.textContent = selectedRating;
+            
+            stars.forEach((s, i) => {
+                if (i < selectedRating) {
+                    s.classList.add('active');
+                } else {
+                    s.classList.remove('active');
+                }
+            });
+        });
+        
+        star.addEventListener('mouseenter', function() {
+            const hoverRating = parseInt(this.dataset.rating);
+            stars.forEach((s, i) => {
+                if (i < hoverRating) {
+                    s.style.filter = 'grayscale(0%) brightness(1)';
+                } else {
+                    s.style.filter = 'grayscale(100%) brightness(0.5)';
+                }
+            });
+        });
+    });
+    
+    starsInput.addEventListener('mouseleave', function() {
+        stars.forEach((s, i) => {
+            if (i < selectedRating) {
+                s.style.filter = 'grayscale(0%) brightness(1)';
+            } else {
+                s.style.filter = 'grayscale(100%) brightness(0.5)';
+            }
+        });
+    });
+    
+    // Open modal
+    if (rateButton) {
+        rateButton.addEventListener('click', function() {
+            ratingModal.classList.add('show');
+            selectedRating = 0;
+            ratingValue.textContent = '0';
+            commentName.value = '';
+            commentText.value = '';
+            stars.forEach(s => s.classList.remove('active'));
+        });
+    }
+    
+    // Close modal
+    if (modalClose) {
+        modalClose.addEventListener('click', function() {
+            ratingModal.classList.remove('show');
+        });
+    }
+    
+    // Close modal on overlay click
+    if (ratingModal) {
+        ratingModal.addEventListener('click', function(e) {
+            if (e.target === ratingModal) {
+                ratingModal.classList.remove('show');
+            }
+        });
+    }
+    
+    // Submit rating
+    if (submitButton) {
+        submitButton.addEventListener('click', function() {
+            if (selectedRating === 0) {
+                alert('Please select a rating');
+                return;
+            }
+            
+            const comment = commentText.value.trim();
+            const author = commentName.value.trim();
+            saveComment(selectedRating, comment, author);
+            displayRating();
+            displayComments();
+            
+            ratingModal.classList.remove('show');
+            notification.textContent = 'Review added!';
+            showNotification();
+            
+            // Reset form
+            selectedRating = 0;
+            ratingValue.textContent = '0';
+            commentName.value = '';
+            commentText.value = '';
+            stars.forEach(s => s.classList.remove('active'));
+        });
+    }
+    
+    // Initial load
+    displayRating();
+    displayComments();
 });
 
